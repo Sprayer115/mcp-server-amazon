@@ -1,7 +1,7 @@
 import * as cheerio from 'cheerio'
 import fs from 'fs'
 import puppeteer from 'puppeteer'
-import { USE_MOCKS, EXPORT_LIVE_SCRAPING_FOR_MOCKS, getAmazonDomain } from './config.js'
+import { USE_MOCKS, EXPORT_LIVE_SCRAPING_FOR_MOCKS, getAmazonDomain, getAmazonUrlPrefix, getLocaleStrings } from './config.js'
 import { createBrowserAndPage, getTimestamp, throwIfNotLoggedIn } from './utils.js'
 
 const __dirname = new URL('.', import.meta.url).pathname
@@ -18,7 +18,8 @@ export async function getOrdersHistory() {
     html = fs.readFileSync(mockPath, 'utf-8')
   } else {
     const domain = getAmazonDomain()
-    const url = `https://www.${domain}/-/en/gp/css/order-history`
+    const prefix = getAmazonUrlPrefix()
+    const url = `https://www.${domain}${prefix}/gp/css/order-history`
     console.error(`[INFO][get-orders-history] Fetching orders history from ${url}`)
 
     const { browser, page } = await createBrowserAndPage()
@@ -102,7 +103,8 @@ function extractOrdersHistoryPageData($: cheerio.CheerioAPI, $card: cheerio.Chee
 
     let returnEligible = false
     let returnDate = null
-    if (returnText.includes('Return or Replace Items')) {
+    const localeStrings = getLocaleStrings()
+    if (returnText.includes(localeStrings.returnOrReplace)) {
       returnEligible = true
       const returnDateMatch = returnText.match(/until (.+)/)
       returnDate = returnDateMatch ? returnDateMatch[1] : null

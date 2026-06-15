@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio'
 import fs from 'fs'
-import { USE_MOCKS, EXPORT_LIVE_SCRAPING_FOR_MOCKS, getAmazonDomain } from './config.js'
+import { USE_MOCKS, EXPORT_LIVE_SCRAPING_FOR_MOCKS, getAmazonDomain, getAmazonUrlPrefix, getLocaleStrings } from './config.js'
 import { createBrowserAndPage, getTimestamp, throwIfNotLoggedIn } from './utils.js'
 
 const __dirname = new URL('.', import.meta.url).pathname
@@ -39,7 +39,8 @@ export async function getCartContent(): Promise<CartContent> {
     html = fs.readFileSync(mockPath, 'utf-8')
   } else {
     const domain = getAmazonDomain()
-    const url = `https://www.${domain}/-/en/gp/cart/view.html?ref_=nav_cart`
+    const prefix = getAmazonUrlPrefix()
+    const url = `https://www.${domain}${prefix}/gp/cart/view.html?ref_=nav_cart`
     console.error(`[INFO][get-cart-content] Fetching cart content from ${url}`)
 
     const { browser, page } = await createBrowserAndPage()
@@ -83,7 +84,8 @@ function extractCartPageData($: cheerio.CheerioAPI): CartContent {
 
   // Check if cart is empty
   const emptyCartText = $cartContainer.text()
-  if (emptyCartText.includes('Your Amazon Cart is empty')) {
+  const localeStrings = getLocaleStrings()
+  if (emptyCartText.includes(localeStrings.emptyCart)) {
     return {
       isEmpty: true,
       items: [],
@@ -152,7 +154,8 @@ export async function addToCart(asin: string): Promise<{ success: boolean; messa
   }
 
   const domain = getAmazonDomain()
-  const url = `https://www.${domain}/-/en/gp/product/${asin}`
+  const prefix = getAmazonUrlPrefix()
+  const url = `https://www.${domain}${prefix}/gp/product/${asin}`
   console.error(`[INFO][add-to-cart] Adding product ${asin} to cart from ${url}`)
 
   const { browser, page } = await createBrowserAndPage()
@@ -169,7 +172,8 @@ export async function addToCart(asin: string): Promise<{ success: boolean; messa
 
     try {
       // Check for subscribe and save option using XPath
-      const xpath = "//div[contains(@class, 'accordion-caption')]//span[contains(text(), 'One-time purchase')]"
+      const localeStrings = getLocaleStrings()
+      const xpath = `//div[contains(@class, 'accordion-caption')]//span[contains(text(), '${localeStrings.oneTimePurchase}')]`
       const element = await page.waitForSelector(`::-p-xpath(${xpath})`, { timeout: 2000 })
       if (element) {
         console.error(`[INFO][add-to-cart] The item is a subscribe and save product, clicking the one-time purchase option`)
@@ -207,8 +211,9 @@ export async function addToCart(asin: string): Promise<{ success: boolean; messa
 
       // Check for success message
       const confirmationText = await page.$eval('#sw-atc-confirmation', el => el.textContent || '')
-
-      if (!confirmationText.includes('Added to cart') && !confirmationText.includes('Added to basket')) {
+      const localeStrings = getLocaleStrings()
+      const addedToCart = localeStrings.addedToCart.some(text => confirmationText.includes(text))
+      if (!addedToCart) {
         throw new Error(`Unexpected confirmation message: ${confirmationText}`)
       }
 
@@ -231,7 +236,8 @@ export async function addToCart(asin: string): Promise<{ success: boolean; messa
 
 export async function clearCart() {
   const domain = getAmazonDomain()
-  const url = `https://www.${domain}/-/en/gp/cart/view.html`
+  const prefix = getAmazonUrlPrefix()
+  const url = `https://www.${domain}${prefix}/gp/cart/view.html`
   console.error(`[INFO][clear-cart] Clearing cart at ${url}`)
 
   const { browser, page } = await createBrowserAndPage()

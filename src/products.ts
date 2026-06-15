@@ -1,7 +1,7 @@
 import * as cheerio from 'cheerio'
 import fs from 'fs'
 import puppeteer from 'puppeteer'
-import { USE_MOCKS, EXPORT_LIVE_SCRAPING_FOR_MOCKS, getAmazonDomain } from './config.js'
+import { USE_MOCKS, EXPORT_LIVE_SCRAPING_FOR_MOCKS, getAmazonDomain, getAmazonUrlPrefix } from './config.js'
 import { createBrowserAndPage, getTimestamp, throwIfNotLoggedIn } from './utils.js'
 
 const __dirname = new URL('.', import.meta.url).pathname
@@ -43,7 +43,8 @@ export async function getProductDetails(asin: string): Promise<ProductDetails> {
     html = fs.readFileSync(mockPath, 'utf-8')
   } else {
     const domain = getAmazonDomain()
-    const url = `https://www.${domain}/-/en/gp/product/${asin}`
+    const prefix = getAmazonUrlPrefix()
+    const url = `https://www.${domain}${prefix}/gp/product/${asin}`
     console.error(`[INFO][get-product-details] Fetching product details from ${url}`)
 
     const { browser, page } = await createBrowserAndPage()
@@ -337,7 +338,8 @@ function extractSearchResultSingleProductData($: cheerio.CheerioAPI, $item: chee
 
   // Extract product URL
   const domain = getAmazonDomain()
-  const productUrl = `https://www.${domain}/-/en/gp/product/${asin}`
+  const prefix = getAmazonUrlPrefix()
+  const productUrl = `https://www.${domain}${prefix}/gp/product/${asin}`
 
   return {
     asin,

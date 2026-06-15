@@ -78,3 +78,49 @@ export function getAmazonDomain(): string {
   console.error('[WARN] Could not detect Amazon domain from cookies, using default amazon.com')
   return 'amazon.com'
 }
+
+/**
+ * Get the locale/language prefix for Amazon URLs.
+ * amazon.com uses /-/en/ for English; amazon.de and other EU sites don't use this prefix.
+ */
+export function getAmazonUrlPrefix(): string {
+  const domain = getAmazonDomain()
+  // Only amazon.com uses the /-/en/ language prefix
+  if (domain === 'amazon.com') {
+    return '/-/en'
+  }
+  return ''
+}
+
+/**
+ * Locale-specific strings for scraping text content from Amazon pages.
+ * Maps domain → locale strings used by the scrapers.
+ */
+export const LOCALE_STRINGS: Record<string, {
+  emptyCart: string
+  addedToCart: string[]
+  oneTimePurchase: string
+  returnOrReplace: string
+}> = {
+  'amazon.com': {
+    emptyCart: 'Your Amazon Cart is empty',
+    addedToCart: ['Added to cart', 'Added to basket'],
+    oneTimePurchase: 'One-time purchase',
+    returnOrReplace: 'Return or Replace Items',
+  },
+  'amazon.de': {
+    emptyCart: 'Ihr Amazon-Einkaufswagen ist leer',
+    addedToCart: ['Zum Einkaufswagen hinzugefügt'],
+    oneTimePurchase: 'Einmaliger Kauf',
+    returnOrReplace: 'Artikel zurückgeben oder ersetzen',
+  },
+}
+
+/**
+ * Get locale strings for the current Amazon domain.
+ * Falls back to amazon.com strings if domain is not mapped.
+ */
+export function getLocaleStrings() {
+  const domain = getAmazonDomain()
+  return LOCALE_STRINGS[domain] || LOCALE_STRINGS['amazon.com']
+}
