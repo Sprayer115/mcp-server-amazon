@@ -1,6 +1,7 @@
 import { loadAmazonCookiesFile } from './utils.js'
+import { fileURLToPath } from 'url'
 
-const __dirname = new URL('.', import.meta.url).pathname
+const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
 export const IS_BROWSER_VISIBLE = false
 

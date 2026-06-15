@@ -2,8 +2,9 @@ import * as cheerio from 'cheerio'
 import fs from 'fs'
 import { USE_MOCKS, EXPORT_LIVE_SCRAPING_FOR_MOCKS, getAmazonDomain, getAmazonUrlPrefix, getLocaleStrings } from './config.js'
 import { createBrowserAndPage, getTimestamp, throwIfNotLoggedIn } from './utils.js'
+import { fileURLToPath } from 'url'
 
-const __dirname = new URL('.', import.meta.url).pathname
+const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
 // ##################################
 // Cart Content Types
